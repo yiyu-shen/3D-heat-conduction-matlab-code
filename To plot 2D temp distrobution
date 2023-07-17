@@ -1,0 +1,75 @@
+%heat transfer project%
+%3D conduction problem with gaussian laser heat input%
+%unites in: x,y,z,r_zero [mm]; t [s]; Qinput [W];  Ti [K]; v[mm/s]; u[mm/s];
+%k[W/mm*K]; Cp [J/g*K]; density [g/mm^3]
+%clear all;
+%clc;
+
+%the location of thermal couple is placed, unites in [mm]
+%x=0.005;     %[-0.01:0.0005:0.01];   
+x_list = [-0.2:0.0001:0.2];
+y=0;
+z=-0.0005;
+u=0;     %speed on x direction [mm/s]
+v=0;     %speed on y direction [mm/s]
+Ti=300;  %initial temperature  [K]
+r_zero=0.03;   %laser beam radius [mm]
+PE = 15;     %pulse energy [uJ]
+PD = 0.0015;     %pulse duration [us]
+%Qinput= PE/PD;   %laser power       [W]
+Qinput= PE/PD;   %laser power       [W]
+density=0.00321;  %material density       [g/mm^3]
+Cp=0.75;           %heat capacity [J/g*K]
+k_list=[0.49];           %thermal conductivity [W/mm*K]
+%alpha=k/(density*Cp) ; %thermal diffusivity
+abs_per_um = 0.002;  %every 1 um of material, 0.2% of laser energy get absorpted 
+abs=0.01*abs_per_um;     %absorption before any non-linear happened, means below SSD threshold
+
+tend=PD*1e-6;            %end time
+delta_t=tend/50;    %time step
+%delta_t=1e-9;      %time step
+%tend=5e-8;         %end time
+time=delta_t:delta_t:tend;   %x-axis for plot
+%A=2*(Qinput*delta_t)/(density*Cp*(3.14159^1.5)*(alpha^0.5));  %easy for compute
+
+T=[];
+temp1=[];
+temp2=0;
+
+for b=1:length(x_list)
+    k=k_list(1);    %k=k_list(b)  only used when k is a variable of location
+    x=x_list(b);
+    alpha=k/(density*Cp) ; %thermal diffusivity
+    A=abs*0.5*2*(Qinput*delta_t)/(density*Cp*(3.14159^1.5)*(alpha^0.5));  %easy for compute
+
+for i=1:(tend/delta_t)
+    n=i*delta_t;              %this for loop find temperature value at every time point
+
+    for j=1:i
+        m=j*delta_t;
+        t=m-delta_t/2;
+        temp1(j)=A*(1/(n-t))*(1/(r_zero^2+8*alpha*(n-t)))*exp(-((2*(x-u*t)^2+2*(y-v*t)^2)/(r_zero^2+8*alpha*(n-t)))-((2*z^2)/(8*alpha*(n-t))));        
+    end
+
+temp2=sum(temp1);   %sum instead of imtergal
+T(b,i)=Ti+temp2;    %discrete method instead of intergal
+
+temp1=[];    %inilized temp vector
+temp2=0;     %inilized temp number
+end
+
+end
+%plot(time,T)
+
+figure(1);
+plot(1000*x_list,T(:,length(time)-1))
+xlabel('position(um)')
+ylabel('Temperature (k)')
+%xlim([-inf 0]) 
+ylim([300 2000]);
+
+%figure(2);
+%hold on;
+%plot(time*1e9,T(2001,:))
+
+
